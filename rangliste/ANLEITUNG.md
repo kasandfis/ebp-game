@@ -127,7 +127,7 @@ Statt die Werte einzutippen, können Sie sie rechts auch aus dem dynamischen Inh
 ### 3.7 Antwort
 **Antwort** (Response, Gruppe «Anforderung»). Statuscode `200`; Header: Schlüssel `Content-Type`, Wert `application/json`; Text (Body):
 ```
-addProperty(json('{"ok":true}'), 'rows', body('Liste'))
+json(concat('{"ok":true,"rows":', string(body('Liste')), '}'))
 ```
 Keinen Header `Access-Control-Allow-Origin` ergänzen; Power Automate setzt ihn selbst.
 
