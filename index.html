@@ -5666,7 +5666,7 @@ RF.VOICE_DATA = {"abgabe":"//lgYAFgAADQQAf/+WBgHeAAAPKd4lHlIsFfimCZrXUNpvBZiMQd+
   // ---------- input ----------
   function toWorld(x, y) { return { x: (x - CX) / U, y: (y - CY) / U }; }
   function pointerAim(e) {
-    if (IN.locked) return;
+    if (IN.locked || !ring) return;
     var p = toWorld(e.clientX, e.clientY);
     IN.px = e.clientX; IN.py = e.clientY;
     // a dead zone over the town keeps the ring from flipping when the pointer crosses the centre
