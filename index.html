@@ -667,7 +667,8 @@ RF.svgURI = function (svg) { return 'data:image/svg+xml;charset=utf-8,' + encode
 // RING FREI. — EBP-Rangliste client. Backend: a Power Automate flow on a SharePoint list
 // (docs/rangliste-sharepoint.md), or the Google Apps Script fallback (backend/rangliste.gs).
 // POST url, body {op:'top', k} or {op:'submit', k, s, r, t, era, rank, p}
-//   SharePoint flow -> { ok, rows: [{k, s, r, era, d}, …] }  (all rows; this file derives top 10, place, best)
+//   SharePoint flow -> { ok, rows: [{k, s, r, era, d}, …] }  (all rows, answered *before* it saves; this file
+//                      keeps each Kürzel's best row, adds the score just sent and derives top 10, place, best)
 //   Apps Script     -> { ok, top: [{k, s, r, era, rank, d}], players, rank?, best?, improved? }
 // text/plain keeps it a simple CORS request (no preflight).
 (function () {
@@ -684,16 +685,25 @@ RF.svgURI = function (svg) { return 'data:image/svg+xml;charset=utf-8,' + encode
 
   // backends differ in small ways (numbers as text, unsorted rows): normalise before anyone renders it
   function row(e) { return e && { k: String(e.k || ''), s: Number(e.s) || 0, r: Number(e.r) || 0, era: String(e.era || ''), rank: String(e.rank || ''), d: String(e.d || '').slice(0, 10) }; }
-  // the SharePoint flow just returns all rows ({ok, rows}); top 10, place and best are worked out here,
-  // which keeps the flow short (less to build by hand, fewer billed actions). k / sent: the Kürzel and score just submitted
-  function clean(d, k, sent) {
+  function today() { var t = new Date(); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); }
+  // the SharePoint flow is one straight line with a single condition at the end: it answers with all rows,
+  // then appends the new row if it beats the old best (no deleting). So the list can hold several rows per
+  // Kürzel and lacks the score just sent; both are settled here. sent: the submitted body (op 'submit') or null
+  function clean(d, sent) {
     var all = (d.rows || d.top || []).map(row).filter(function (e) { return e.k; }), i;
+    var k = sent ? String(sent.k || '').toUpperCase() : '', s = sent ? Number(sent.s) || 0 : 0;
+    if (d.rows) {
+      var best = {};
+      all.forEach(function (e) { if (!best[e.k] || e.s > best[e.k].s) best[e.k] = e; });
+      if (k && s > 0 && (!best[k] || s > best[k].s)) best[k] = row({ k: k, s: s, r: sent.r, era: sent.era, d: today() });
+      all = Object.keys(best).map(function (key) { return best[key]; });
+    }
     all.sort(function (a, b) { return b.s - a.s; });
     var out = { ok: true, top: all.slice(0, 10), players: d.rows ? all.length : Number(d.players) || all.length };
     if (d.rows) {
       for (i = 0; i < all.length; i++) if (all[i].k === k) { out.best = all[i]; break; }
       if (out.best) out.rank = 1 + all.filter(function (e) { return e.s > out.best.s; }).length;
-      if (sent && out.best) out.improved = out.best.s <= sent;   // the stored best is the score just sent
+      if (s && out.best) out.improved = out.best.s <= s;   // the best is now the score just sent
     } else {
       if (d.rank) out.rank = Number(d.rank);
       if (d.best) out.best = row(d.best);
@@ -714,7 +724,7 @@ RF.svgURI = function (svg) { return 'data:image/svg+xml;charset=utf-8,' + encode
       return res.json();
     }, function () { clearTimeout(timer); throw { error: 'offline' }; }).then(function (d) {
       if (!d || !(d.ok === true || d.ok === 'true')) throw { error: (d && d.error) || 'server' };
-      d = clean(d, String(body.k || '').toUpperCase(), body.op === 'submit' ? Number(body.s) : 0);
+      d = clean(d, body.op === 'submit' ? body : null);
       cacheSet({ top: d.top, players: d.players, at: Date.now() });
       return d;
     });
