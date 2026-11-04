@@ -61,15 +61,19 @@ json(if(empty(string(triggerBody())), '{}', string(triggerBody())))
 ```
 
 ### 3.2 Verfassen → Kuerzel
-Ergibt das Kürzel in Grossbuchstaben, oder nichts, wenn es nicht aus 2 bis 4 Buchstaben A bis Z besteht:
+Ergibt das Kürzel in Grossbuchstaben, oder nichts, wenn es nicht aus 2 bis 4 Buchstaben A bis Z besteht. Der Ausdruck ist lang, weil er jeden Buchstaben einzeln entfernt und dann prüft, ob etwas übrig bleibt; am besten mit dem Kopier-Symbol übernehmen:
 ```
-if(and(equals(length(union(chunk(concat(toUpper(string(outputs('Eingabe')?['k'])), 'A'), 1), chunk('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 1))), 26), greaterOrEquals(length(string(outputs('Eingabe')?['k'])), 2), lessOrEquals(length(string(outputs('Eingabe')?['k'])), 4)), toUpper(string(outputs('Eingabe')?['k'])), '')
+if(and(greaterOrEquals(length(string(outputs('Eingabe')?['k'])), 2), lessOrEquals(length(string(outputs('Eingabe')?['k'])), 4), empty(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(toUpper(string(outputs('Eingabe')?['k'])), 'A', ''), 'B', ''), 'C', ''), 'D', ''), 'E', ''), 'F', ''), 'G', ''), 'H', ''), 'I', ''), 'J', ''), 'K', ''), 'L', ''), 'M', ''), 'N', ''), 'O', ''), 'P', ''), 'Q', ''), 'R', ''), 'S', ''), 'T', ''), 'U', ''), 'V', ''), 'W', ''), 'X', ''), 'Y', ''), 'Z', ''))), toUpper(string(outputs('Eingabe')?['k'])), '')
 ```
 
 ### 3.3 Verfassen → Wirkung
 Die Wirkung als ganze Zahl, 0 bei ungültigen Werten:
 ```
 int(if(isInt(string(outputs('Eingabe')?['s'])), string(outputs('Eingabe')?['s']), '0'))
+```
+Meldet der Designer, er kenne `isInt` nicht, stattdessen:
+```
+int(coalesce(outputs('Eingabe')?['s'], 0))
 ```
 
 ### 3.4 Elemente abrufen → Spieler
@@ -85,6 +89,8 @@ int(if(isInt(string(outputs('Eingabe')?['s'])), string(outputs('Eingabe')?['s'])
 ```
 and(equals(outputs('Eingabe')?['op'], 'submit'), not(empty(outputs('Kuerzel'))), greater(outputs('Wirkung'), coalesce(first(body('Spieler')?['value'])?['Wirkung'], 0)), lessOrEquals(outputs('Wirkung'), 500000000), lessOrEquals(outputs('Wirkung'), add(mul(float(if(isFloat(string(outputs('Eingabe')?['t'])), string(outputs('Eingabe')?['t']), '0')), 250000), 500000)))
 ```
+Kennt der Designer `isFloat` nicht, im Ausdruck oben den Teil `float(if(isFloat(string(outputs('Eingabe')?['t'])), string(outputs('Eingabe')?['t']), '0'))` ersetzen durch `float(coalesce(outputs('Eingabe')?['t'], 0))`.
+
 Das ist wahr, wenn ein gültiger Eintrag kommt, der besser ist als der gespeicherte (oder der erste für dieses Kürzel). Die Plausibilitätsgrenze: höchstens CHF 500 Mio. und höchstens CHF 250 000 pro Spielsekunde plus CHF 500 000. Ungültige Einträge werden still ignoriert.
 
 ### 3.6 Im Zweig «Wahr» von Speichern: Bedingung → Vorhanden
