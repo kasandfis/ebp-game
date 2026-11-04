@@ -112,11 +112,17 @@ So liefert «Spieler» den bisher besten Eintrag dieses Kürzels.
 ```
 body('Alle')?['value']
 ```
-**Zuordnen**: auf **Textmodus** umschalten (Symbol rechts neben dem Feld) und diesen Ausdruck einfügen:
-```
-addProperty(addProperty(addProperty(addProperty(addProperty(json('{}'), 'k', item()?['Title']), 's', coalesce(item()?['Wirkung'], 0)), 'r', coalesce(item()?['Runde'], 0)), 'era', coalesce(item()?['Ausbaustand'], '')), 'd', coalesce(item()?['Datum'], ''))
-```
-Gibt es keinen Textmodus: fünf Zeilen eintragen, links der Schlüssel als Text, rechts der Wert als Ausdruck: `k` → `item()?['Title']`, `s` → `coalesce(item()?['Wirkung'], 0)`, `r` → `coalesce(item()?['Runde'], 0)`, `era` → `coalesce(item()?['Ausbaustand'], '')`, `d` → `coalesce(item()?['Datum'], '')`.
+**Zuordnen** (Map): in der **Tabellenansicht** fünf Zeilen eintragen, nicht im Textmodus (der nimmt keine Ausdrücke an und meldet «map must be object»). Links steht der Schlüssel als Text, rechts der Wert als Ausdruck über **fx**:
+
+| Schlüssel | Wert (Ausdruck) |
+|---|---|
+| `k` | `item()?['Title']` |
+| `s` | `item()?['Wirkung']` |
+| `r` | `item()?['Runde']` |
+| `era` | `item()?['Ausbaustand']` |
+| `d` | `item()?['Datum']` |
+
+Statt die Werte einzutippen, können Sie sie rechts auch aus dem dynamischen Inhalt von «Alle» wählen (Blitz-Symbol: Kürzel, Wirkung, Runde, Ausbaustand, Datum). Leere Felder oder Zahlen als Text sind kein Problem; das Spiel bereinigt sie.
 
 ### 3.7 Antwort
 **Antwort** (Response, Gruppe «Anforderung»). Statuscode `200`; Header: Schlüssel `Content-Type`, Wert `application/json`; Text (Body):
