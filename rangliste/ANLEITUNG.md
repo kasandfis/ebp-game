@@ -52,7 +52,27 @@ After the HTTP trigger, add these actions in this order: three Compose actions n
 ```
 
 ## 3. Die Schritte im Flow
-Neun Aktionen, alle untereinander, ausser wo «im Zweig» steht.
+Der fertige Flow sieht so aus. Eingerückt heisst: innerhalb eines Zweigs der Bedingung darüber. Alles andere steht ganz aussen, untereinander.
+
+```text
+Beim Empfang einer HTTP-Anforderung
+Eingabe ............ Verfassen
+Kuerzel ............ Verfassen
+Wirkung ............ Verfassen
+Spieler ............ Elemente abrufen (Filterabfrage, Anzahl 1; keine ID)
+Speichern .......... Bedingung
+   Zweig Wahr:
+      Vorhanden .... Bedingung
+         Zweig Wahr:   Element löschen (hier, und nur hier, steht eine ID)
+         Zweig Falsch: leer
+      Element erstellen  (unter Vorhanden, noch im Zweig Wahr von Speichern)
+   Zweig Falsch: leer
+Alle ............... Elemente abrufen (wieder ganz aussen, unter Speichern)
+Liste .............. Auswählen
+Antwort
+```
+
+Wichtig: **Alle**, **Liste** und **Antwort** gehören unter die Bedingung Speichern, nicht in ihren Zweig. Sonst antwortet der Flow nur, wenn gerade etwas gespeichert wurde. Im Designer dafür das **+** unter dem ganzen Bedingungsblock nehmen, nicht das in einem Zweig.
 
 ### 3.1 Verfassen → Eingabe
 **Verfassen** (Compose, Gruppe «Datenvorgang»), umbenennen in `Eingabe`. Eingabe:
@@ -73,7 +93,7 @@ int(coalesce(outputs('Eingabe')?['s'], 0))
 ```
 
 ### 3.4 Elemente abrufen → Spieler
-**Elemente abrufen** (Get items, SharePoint), umbenennen in `Spieler`. Websiteadresse: Ihre Website; Listenname: `Ring frei Rangliste`. Unter «Erweiterte Parameter»:
+**Elemente abrufen** (Get items, SharePoint, Mehrzahl), umbenennen in `Spieler`. Diese Aktion hat kein Feld für eine ID. Fragt sie nach einer ID, ist es «Element abrufen» (Get item, Einzahl): löschen und die Mehrzahl einfügen. Websiteadresse: Ihre Website; Listenname: `Ring frei Rangliste`. Unter «Erweiterte Parameter»:
 - **Filterabfrage**, als Ausdruck:
   ```
   concat('Title eq ''', outputs('Kuerzel'), '''')
